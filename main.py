@@ -24,31 +24,36 @@ def process_excel_files(data_folder, output_folder, common_first_names, common_l
         else:
             print(f"Required columns are missing in {file}")
 
-def clean_and_split_name(full_name, common_first_names, common_last_names):
-    business_entities = ["llc", "trust", "investment", "properties", "prop", "capital", "acquisitions", "association", "inc", "incorporated", "and", "council", "rental"]
-    name_terms = ["jr", "sr", "tr", "ii", "iii", "iv", "esq", "phd", "md", "aka", "fka", "tod", "dba", "mba", "cpa", "-estate of"]
+import re
 
-    # Clean the full name from any unwanted characters and spaces
+def clean_and_split_name(full_name, common_first_names, common_last_names):
+    business_entities = ["trust", "investment", "properties", "prop", "capital", "acquisitions", "association", "inc", "incorporated", "and", "council", "rental"]
+    name_terms = ["jr", "sr", "tr", "ii", "iii", "iv", "esq", "phd", "md", "aka", "fka", "tod", "dba", "mba", "cpa", "-estate of"]
     full_name = str(full_name).strip(" ,-.")
 
-    # Check if the full name belongs to a business entity
+    # Split and lower case for processing
     name_words = full_name.lower().split()
-    if any(entity in name_words for entity in business_entities):
-        first_name, last_name = full_name, full_name  # Same if a business entity
-        cleaned_full_name = full_name.lower().title().replace('Llc', 'LLC')
+
+    # Check and handle if 'llc' is in the name separately
+    if 'llc' in name_words:
+        # Identify and remove 'llc', set it as last_name
+        name_words.remove('llc')
+        first_name = ' '.join(name_words).title()
+        last_name = 'LLC'
+    elif any(entity in name_words for entity in business_entities):
+        # Handle other business entities
+        first_name, last_name = full_name, full_name  
+        cleaned_full_name = full_name.lower().title()  # Example specific adjustment
     else:
-        # Split and clean the full name from titles or single letters
+        # Handle individual names
         words = full_name.split()
         if 'tr' in [word.lower() for word in words]:
             last_name = words[0]
-            first_name = ' '.join(words[1:-1])  # Exclude the 'tr'
+            first_name = ' '.join(words[1:-1])  
         else:
             cleaned_name = re.sub(r'[^\w\s]', '', full_name)
             name_parts = cleaned_name.split()
-
-            # Filter out single-letter words, unless they are essential parts of the name
             essential_parts = [word for word in name_parts if len(word) > 1 or (len(word) == 1 and len(name_parts) == 2)]
-
             if len(essential_parts) == 1:
                 first_name, last_name = essential_parts[0], ''
             elif essential_parts:
@@ -59,7 +64,6 @@ def clean_and_split_name(full_name, common_first_names, common_last_names):
         # Further cleaning for name correctness
         first_name_parts = first_name.split()
         last_name_parts = last_name.split()
-
         first_name = ' '.join(word for word in first_name_parts if word.lower() not in name_terms and len(word) > 1)
         last_name = ' '.join(word for word in last_name_parts if word.lower() not in name_terms and len(word) > 1)
 
@@ -69,12 +73,13 @@ def clean_and_split_name(full_name, common_first_names, common_last_names):
         last_in_first_names = last_name.title() in common_first_names
         last_in_last_names = last_name.title() in common_last_names
 
-        # Swap names only under specific conditions
+        # Swap names under specific conditions
         if (first_in_last_names and not first_in_first_names and not last_in_last_names) or \
            (last_in_first_names and not last_in_last_names and not first_in_first_names):
             first_name, last_name = last_name, first_name
 
     return first_name.strip(), last_name.strip()
+
 
 if __name__ == '__main__':
     process_excel_files(data_folder, output_folder, common_first_names, common_last_names)

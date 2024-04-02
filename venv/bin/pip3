@@ -1,4 +1,6 @@
-#!/Users/ignacioaraya/8020REI/CleanName/venv/bin/python3.12
+#!/bin/sh
+'''exec' "/Users/ignacioaraya/8020REI/Audit & Testing/CleanName/venv/bin/python3.12" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys
